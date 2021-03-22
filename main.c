@@ -4,28 +4,29 @@
 #include <string.h>
 #include <stdbool.h>
 #include <math.h>
+#define DEBUG 0
 // #include "FileReader.h"
 #define MAX 1000
 
 struct RecipeList recipes;
 
-
 struct IngredientNode {
-	char* name;
-	int amt;
+	char name[MAX];
+	double amt;
 	struct IngredientNode* next;
 };
 
 struct IngredientList {
 	struct IngredientNode* head;
 	struct IngredientNode* tail;	
+	int size;
 };
 
 struct Recipe {
-  char* name;
-  char* description;
-  char* category;
-	char* profile;
+  char name[MAX];
+  char description[MAX];
+  char category[MAX];
+	char profile[MAX];
 	struct IngredientList ingredientList;
 };
 
@@ -36,6 +37,7 @@ struct RecipeNode {
 
 // Dynamic list of recipes
 struct RecipeList {
+	int size;
 	struct RecipeNode* head;
 	struct RecipeNode* tail;	
 };
@@ -48,24 +50,13 @@ void printIngredients(struct IngredientList ingredientList) {
 		curr = curr->next;
 	}
 }
-void printRecipes() {
-	struct RecipeNode *curr = recipes.head;
-	while(curr != NULL) {
-		printf("Name: %s\n", curr->recipe.name);
-		printf("Description: %s\n", curr->recipe.description);
-		printf("Category: %s\n", curr->recipe.category);
-		printf("Profile: %s\n", curr->recipe.profile);
-		printIngredients(curr->recipe.ingredientList);
-		curr = curr->next;
-	}
-}
+
 void insertRecipe(struct Recipe* recipe) {
 	struct RecipeNode *recipeNode;
 
 	recipeNode = (struct RecipeNode*)malloc(sizeof(struct RecipeNode));
 	recipeNode->recipe = *recipe;
 	recipeNode->next = NULL;
-	
 
 	if(recipes.head == NULL) {
 		recipes.head = recipeNode;
@@ -73,19 +64,20 @@ void insertRecipe(struct Recipe* recipe) {
 	}
 	else {
 		recipes.tail->next = recipeNode;
-		recipes.tail= recipes.tail->next;
+		recipes.tail=recipes.tail->next;
 	}
+	recipes.size++;
 }
 
 void insertIngredient(char* name, int amt, struct Recipe* recipe) {
 	struct IngredientNode *ingredientNode;
 	ingredientNode = (struct IngredientNode*)malloc(sizeof(struct IngredientNode));
-	ingredientNode->name = (char *)malloc(sizeof(char) * MAX);
-	strcpy(ingredientNode->name, name);
+	memset(ingredientNode->name, '\0', sizeof(ingredientNode->name));
+	strncpy(ingredientNode->name, name, strlen(name));
 	ingredientNode->amt = amt;
 	ingredientNode->next = NULL;
 
-	if(recipes.head == NULL) {
+	if(recipe->ingredientList.head == NULL) {
 		recipe->ingredientList.head = ingredientNode;
 		recipe->ingredientList.tail = ingredientNode;
 	}
@@ -93,32 +85,7 @@ void insertIngredient(char* name, int amt, struct Recipe* recipe) {
 		recipe->ingredientList.tail->next = ingredientNode;
 		recipe->ingredientList.tail = recipe->ingredientList.tail->next;
 	}
-}
-
-char* findVal(char* stringToFind, char* line) {
-	char* matchPtr;
-	matchPtr = strstr(line, stringToFind);
-	if(matchPtr == NULL) {
-		return NULL;
-	}
-	return matchPtr + strlen(stringToFind);
-}
-
-void readRecipeHeader(FILE *ptrFile, struct Recipe* recipe) {
-	char* line = (char*) malloc(sizeof(char) * MAX);
-
-	printf("%s", recipe->name);
-	fgets(line, MAX, ptrFile);
-	strcpy(recipe->description , findVal("Description:", line));
-	printf("%s", recipe->description);
-	fgets(line, MAX, ptrFile);
-	strcpy(recipe->category , findVal("Categories:", line));
-	printf("%s", recipe->category);
-	fgets(line, MAX, ptrFile);
-	strcpy(recipe->profile , findVal("Profile:", line));
-	printf("%s", recipe->profile);
-	fgets(line, MAX, ptrFile);
-	findVal("Ingredients:", line);
+	recipe->ingredientList.size++;
 }
 
 int getCharPos(const char c, const char* line) {
@@ -129,161 +96,200 @@ int getCharPos(const char c, const char* line) {
 }
 
 
+
 //empezar con Recipe->IngredientsList->head
-int recipeComparison(struct IngredientNode *receta1, struct IngredientNode *receta2){
+int recipeComparison(struct IngredientList il1, struct IngredientList il2){
   double ph;
   int counter = 0;
   double distancia = 0;
   char char_Arr[15][30];
 
-  struct IngredientNode *temp1;
-  struct IngredientNode *temp2;
+	struct IngredientNode *curr1 = il1.head, *curr2 = il2.head;
+  // struct IngredientNode *curr3 = il1.head, *curr5 = il2.head;
 
-  temp1 = receta1;
-  temp2 = receta2;
+	bool foundDupe;
 
-  while(temp1 && temp2){
-    do{
-      if(strcmp(temp1->name, temp2->name)){
-        distancia += pow(temp1->amt-temp2->amt, 2);
-        char_Arr[counter][0] = *temp1->name;
-        counter++;
-      }
-      temp1 = temp1->next;
-    }while(temp1);
-    temp1 = receta1;
-    temp2 = temp2->next;
-  };
+	while(curr1 != NULL) {
+		foundDupe = false;
+		while(curr2 != NULL) {
+      if(strcmp(curr1->name, curr2->name) == 0) {
+         	distancia += pow(curr1->amt - curr2->amt, 2);
+					foundDupe = true;
+					break;
+		  }
+			curr2 = curr2->next;
+		}
+		if(!foundDupe) {
+			distancia += pow(curr1->amt, 2);
+		}
+    curr1 = curr1->next;
+		curr2 = il2.head;
+	}
 
-  temp1 = receta1;
-  temp2 = receta2;
-  int counter2 = 0;
-  int counter3 = 0;
-
-  while(temp1){
-    if(!strcmp(temp1->name, char_Arr[counter2])){
-      distancia += pow(temp1->amt, 2);
-    }
-    counter2++;
-  }
-  while(temp2){
-    if(!strcmp(temp2->name, char_Arr[counter3])){
-      distancia += pow(temp2->amt, 2);
-    }
-    counter3++;
-  }
-
+	curr1 = il1.head;
+	curr2 = il2.head;
+	
+  while(curr2 != NULL) {
+		foundDupe = false;
+		while(curr1 != NULL) {
+			if(strcmp(curr1->name, curr2->name) == 0) {
+				foundDupe = true;
+				break;
+			}
+			curr1 = curr1->next;
+		}
+		if(!foundDupe) {
+			distancia += pow(curr2->amt, 2);
+		}
+		curr2 = curr2->next;
+		curr1 = il1.head;
+	}
+  
   return sqrt(distancia);
-
-  return 0;
 }
 
-
-
-void readRecipeIngredients(FILE *ptrFile, struct Recipe* recipe) {
-	char* line = (char*) malloc(sizeof(char) * MAX);
-	char* name = (char *) malloc(sizeof(sizeof(char) * MAX));
-	char* amt = (char *) malloc(sizeof(sizeof(char) * MAX));
-	int iamt;
-
-	fgets(line, MAX, ptrFile);
-	// Read pairs until recipe text is found
-	while(findVal("Recipe:", line) == NULL && !feof(ptrFile)) {
-		int colonPos = getCharPos(':', line);
-		if(colonPos < 0) {
-			printf("Expected to find : in ingredient pair. Found none. Please check that the document is in a valid format.");
-			return;
-		}
-
-		// capturing ingredient name
-		memcpy(name, line, colonPos);
-		memcpy(amt, line + colonPos + 1, strlen(line) - colonPos + 1);
-		printf("%s: ", name);
-		printf("%s", amt);
-		iamt = atoi(amt);
-		insertIngredient(name, iamt, recipe);
+void printRecipes() {
+	struct RecipeNode *curr = recipes.head;
+	while(curr != NULL) {
+		printf("Name: %s", curr->recipe.name);
+		printf("Description: %s", curr->recipe.description);
+		printf("Category: %s", curr->recipe.category);
+		printf("Profile: %s", curr->recipe.profile);
+		printf("# ingredients: %d\n", curr->recipe.ingredientList.size);
+		printIngredients(curr->recipe.ingredientList);
+		printf("\n");
+    //
+    if(curr->next != NULL){
+      printf("Distancia entre: %s ", curr->recipe.name);
+      printf("y %s", curr->next->recipe.name);
+      printf("%d", recipeComparison(curr->recipe.ingredientList , curr->next->recipe.ingredientList));
+    }
+		curr = curr->next;
 	}
 }
-
 
 void readFile(FILE *ptrFile, char* fileName) {
 	ptrFile = fopen(fileName, "r");
 
-	char* line = (char*) malloc(sizeof(char) * MAX);
-	struct Recipe* recipe;
+	char line[MAX], name[MAX], amt[MAX];
+	struct Recipe* recipe = (struct Recipe*) malloc(sizeof(struct Recipe));
 	int accum, colonPos, iamt;
-	char *name, *amt;
 
 	if(ptrFile == NULL) {
 		printf("Error in fopen \n");
 	}
   else{
+		recipes.size = 0;
 		printf("File opened successfully \n");
 		do {
-			fgets(line, MAX, ptrFile);
-			recipe = (struct Recipe*) malloc(sizeof(struct Recipe));
-			recipe->name = (char *) malloc(sizeof(char) * MAX);
-			recipe->description = (char *) malloc(sizeof(char) * MAX);
-			recipe->category = (char *) malloc(sizeof(char) * MAX);
-			recipe->profile = (char *) malloc(sizeof(char) * MAX);
+
+			// reseting variables
+			memset(recipe->name, '\0', sizeof(recipe->name));
+			memset(recipe->description , '\0', sizeof(recipe->description));
+			memset(recipe->profile , '\0', sizeof(recipe->profile));
+			memset(recipe->category , '\0', sizeof(recipe->category));
+			memset(&recipe->ingredientList, 0, sizeof(struct IngredientList));
 
 			//recipeHeader
-			strcpy(recipe->name , findVal("Recipe:", line));
 			fgets(line, MAX, ptrFile);
-			strcpy(recipe->description , findVal("Description:", line));
-			fgets(line, MAX, ptrFile);
-			strcpy(recipe->category , findVal("Categories:", line));
-			fgets(line, MAX, ptrFile);
-			strcpy(recipe->profile , findVal("Profile:", line));
-
-			printf("%s", recipe->name);
-			printf("%s", recipe->description);
-			printf("%s", recipe->category);
-			printf("%s", recipe->profile);
+			colonPos = getCharPos(':', line);
+			if(colonPos < 0) {
+				printf("ERROR IN FORMAT");
+				return;
+			}
+			strncpy(recipe->name, line + colonPos + 1, strlen(line) - colonPos + 1);
 
 			fgets(line, MAX, ptrFile);
-			findVal("Ingredients:", line);
+			colonPos = getCharPos(':', line);
+			if(colonPos < 0) {
+				printf("ERROR IN FORMAT");
+				return;
+			}
+			strncpy(recipe->description, line + colonPos + 1, strlen(line) - colonPos + 1);
 
+			fgets(line, MAX, ptrFile);
+			colonPos = getCharPos(':', line);
+			if(colonPos < 0) {
+				printf("ERROR IN FORMAT");
+				return;
+			}
+			strncpy(recipe->category, line + colonPos + 1, strlen(line) - colonPos + 1);
+
+			fgets(line, MAX, ptrFile);
+			colonPos = getCharPos(':', line);
+			if(colonPos < 0) {
+				printf("ERROR IN FORMAT");
+				return;
+			}
+			strncpy(recipe->profile, line + colonPos + 1, strlen(line) - colonPos + 1);
+
+// #if DEBUG == 1
+// 			printf("%s", recipe->name);
+// 			printf("%s", recipe->description);
+// 			printf("%s", recipe->category);
+// 			printf("%s", recipe->profile);
+// #endif
+
+			fgets(line, MAX, ptrFile);
 			accum = 0;
+			recipe->ingredientList.size = 0;
 			do {
+				memset(amt, '\0', sizeof(amt));
+				memset(name, '\0', sizeof(name));
 				fgets(line, MAX, ptrFile);
-
 				colonPos = getCharPos(':', line);
-				name = (char *) malloc(sizeof(sizeof(char) * MAX));
-				amt = (char *) malloc(sizeof(sizeof(char) * MAX));
-
 				if(colonPos < 0) {
 					printf("Expected to find : in ingredient pair. Found none. Please check that the document is in a valid format.");
 					return;
 				}
 			
 				// capturing ingredient name
-				printf("%s: ", line);
-				memcpy(name, line, colonPos);
-				memcpy(amt, line + colonPos + 1, strlen(line) - colonPos + 1);
-				printf("%s: ", name);
+				strncpy(name, line, colonPos);
+				strncpy(amt, line + colonPos + 1, strlen(line) - colonPos + 1);
 
 				iamt = atoi(amt);
 				accum += iamt;
-				printf("%d\n", iamt);
 				insertIngredient(name, iamt, recipe);
-				free(name);
-				free(amt);
-				printf("%d", accum);
 			} while(accum < 100 && !feof(ptrFile));
-
-			free(recipe);
 			insertRecipe(recipe);
 		} while(!feof(ptrFile));
-		printRecipes();
 	}
 }
+/*
+void DispG(FILE *ptrG, char* fileNameG, struct IngredientList** Mats, struct IngredientList il1, struct IngredientList il2){
+  
+  int i,j;
+  ptrG = fopen(fileNameG, "w");
+  
+  if(ptrG == NULL){
+    printf("Error al abrir el visualizador \n");
+  }
+  else{
+    for(i = 0; i < recipes.size;i++){
+        for(j = 0; j < recipes.size;j++){
+            fprintf(ptrG, "\" %s \" - \"%s\"[])
+        }
+      }
+    }
+  }
 
+}*/
 
 int main(void) {
 	FILE *ptrFile;
 	char* fileName = "Recipes.txt";
 	readFile(ptrFile, fileName);
+  FILE *ptrG;
+  char* filenameG = "graph.gv";
+  /*
+  struct IngredientList **Mats = malloc(sizeof(struct IngredientList) * recipes.size);
+  for(int i = 0; i < recipes.size; i++){
+    Mats[i] = malloc(sizeof(struct IngredientList) * recipes.size);
+	}*/
+  
+  // DispG(ptrG,filenameG, Mats, struct IngredientList il1, struct IngredientList il2);
+  printRecipes();
+  
   return 0;
 }
 
