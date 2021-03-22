@@ -12,7 +12,7 @@ struct RecipeList recipes;
 
 struct IngredientNode {
 	char name[MAX];
-	double amt;
+	int amt;
 	struct IngredientNode* next;
 };
 
@@ -46,7 +46,7 @@ void printIngredients(struct IngredientList ingredientList) {
 	struct IngredientNode *curr = ingredientList.head;
 	while(curr != NULL) {
 		printf("%s:", curr->name);
-		printf("%d\n", curr->amt);
+		printf("%d \n", curr->amt);
 		curr = curr->next;
 	}
 }
@@ -98,16 +98,12 @@ int getCharPos(const char c, const char* line) {
 
 
 //empezar con Recipe->IngredientsList->head
-int recipeComparison(struct IngredientList il1, struct IngredientList il2){
-  double ph;
-  int counter = 0;
+double recipeComparison(struct IngredientList il1, struct IngredientList il2){
   double distancia = 0;
-  char char_Arr[15][30];
+	bool foundDupe;
 
 	struct IngredientNode *curr1 = il1.head, *curr2 = il2.head;
-  // struct IngredientNode *curr3 = il1.head, *curr5 = il2.head;
 
-	bool foundDupe;
 
 	while(curr1 != NULL) {
 		foundDupe = false;
@@ -162,7 +158,7 @@ void printRecipes() {
     if(curr->next != NULL){
       printf("Distancia entre: %s ", curr->recipe.name);
       printf("y %s", curr->next->recipe.name);
-      printf("%d", recipeComparison(curr->recipe.ingredientList , curr->next->recipe.ingredientList));
+      printf("%f \n", recipeComparison(curr->recipe.ingredientList , curr->next->recipe.ingredientList));
     }
 		curr = curr->next;
 	}
@@ -255,9 +251,7 @@ void readFile(FILE *ptrFile, char* fileName) {
 		} while(!feof(ptrFile));
 	}
 }
-/*
-void DispG(FILE *ptrG, char* fileNameG, struct IngredientList** Mats, struct IngredientList il1, struct IngredientList il2){
-  
+void DispG(FILE *ptrG, char* fileNameG){
   int i,j;
   ptrG = fopen(fileNameG, "w");
   
@@ -265,15 +259,26 @@ void DispG(FILE *ptrG, char* fileNameG, struct IngredientList** Mats, struct Ing
     printf("Error al abrir el visualizador \n");
   }
   else{
-    for(i = 0; i < recipes.size;i++){
-        for(j = 0; j < recipes.size;j++){
-            fprintf(ptrG, "\" %s \" - \"%s\"[])
-        }
-      }
-    }
+		struct RecipeNode *curri = recipes.head, *currj = recipes.head;
+		int i = 0, j = 0;
+    fprintf(ptrG, "digraph G  {\n");
+		while(curri != NULL){
+			j = 0;
+			while(currj != NULL) {
+				if(i != j) {
+					fprintf(ptrG, "%s -> %s [label = %f];\n", curri->recipe.name, currj->recipe.name, recipeComparison(curri->recipe.ingredientList, currj->recipe.ingredientList));
+				}
+				currj = currj->next;
+				j++;	
+			}
+			curri = curri->next;
+			currj = recipes.head;
+			i++;
+      
+		}
+    fprintf(ptrG, "}\n");
   }
-
-}*/
+}
 
 int main(void) {
 	FILE *ptrFile;
@@ -281,14 +286,35 @@ int main(void) {
 	readFile(ptrFile, fileName);
   FILE *ptrG;
   char* filenameG = "graph.gv";
-  /*
-  struct IngredientList **Mats = malloc(sizeof(struct IngredientList) * recipes.size);
-  for(int i = 0; i < recipes.size; i++){
-    Mats[i] = malloc(sizeof(struct IngredientList) * recipes.size);
-	}*/
+
+
+	double distMat[MAX][MAX];
+
+	struct RecipeNode *curri = recipes.head, *currj = recipes.head;
+	int i = 0, j = 0;
+	while(curri != NULL){
+		j = 0;
+		while(currj != NULL) {
+			distMat[i][j] = recipeComparison(curri->recipe.ingredientList,currj->recipe.ingredientList);
+			currj = currj->next;
+			j++;	
+		}
+		curri = curri->next;
+		currj = recipes.head;
+		i++;
+	}
+
+// print the matrix
+	for(int x = 0; x < recipes.size; x++) {
+		for(int y = 0; y < recipes.size; y++) {
+			printf("%f ", distMat[x][y]);
+		}
+		printf("\n");
+	}
   
-  // DispG(ptrG,filenameG, Mats, struct IngredientList il1, struct IngredientList il2);
+  DispG(ptrG,filenameG);
   printRecipes();
+  
   
   return 0;
 }
