@@ -1,20 +1,8 @@
 digraph G  {
-Recipe A
- -> Recipe B
- [label = "38.078866"];
-Recipe A
- -> Recipe C
- [label = "37.416574"];
-Recipe B
- -> Recipe A
- [label = "38.078866"];
-Recipe B
- -> Recipe C
- [label = "38.078866"];
-Recipe C
- -> Recipe A
- [label = "37.416574"];
-Recipe C
- -> Recipe B
- [label = "38.078866"];
+"Recipe A" -> "Recipe B" [label = "38.078866"];
+"Recipe A" -> "Recipe C" [label = "37.416574"];
+"Recipe B" -> "Recipe A" [label = "38.078866"];
+"Recipe B" -> "Recipe C" [label = "38.078866"];
+"Recipe C" -> "Recipe A" [label = "37.416574"];
+"Recipe C" -> "Recipe B" [label = "38.078866"];
 }

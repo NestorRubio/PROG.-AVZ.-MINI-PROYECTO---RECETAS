@@ -147,7 +147,7 @@ double recipeComparison(struct IngredientList il1, struct IngredientList il2){
 void printRecipes() {
 	struct RecipeNode *curr = recipes.head;
 	while(curr != NULL) {
-		printf("Name: %s", curr->recipe.name);
+		printf("Name: %s\n", curr->recipe.name);
 		printf("Description: %s", curr->recipe.description);
 		printf("Category: %s", curr->recipe.category);
 		printf("Profile: %s", curr->recipe.profile);
@@ -187,7 +187,7 @@ void readFile(FILE *ptrFile, char* fileName) {
 				printf("ERROR IN FORMAT");
 				return;
 			}
-			strncpy(recipe->name, line + colonPos + 1, strlen(line) - colonPos + 1);
+			strncpy(recipe->name, line + colonPos + 1, strlen(line) - colonPos - 2);
 
 			fgets(line, MAX, ptrFile);
 			colonPos = getCharPos(':', line);
@@ -260,7 +260,7 @@ void DispG(FILE *ptrG, char* fileNameG){
 			j = 0;
 			while(currj != NULL) {
 				if(i != j) {
-					fprintf(ptrG, "%s -> %s [label = \"%f\"];\n", curri->recipe.name, currj->recipe.name, recipeComparison(curri->recipe.ingredientList, currj->recipe.ingredientList));
+					fprintf(ptrG, "\"%s\" -> \"%s\" [label = \"%f\"];\n", curri->recipe.name, currj->recipe.name, recipeComparison(curri->recipe.ingredientList, currj->recipe.ingredientList));
 				}
 				currj = currj->next;
 				j++;	
