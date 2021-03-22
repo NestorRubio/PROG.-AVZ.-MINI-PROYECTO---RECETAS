@@ -154,6 +154,12 @@ void printRecipes() {
 		printf("# ingredients: %d\n", curr->recipe.ingredientList.size);
 		printIngredients(curr->recipe.ingredientList);
 		printf("\n");
+    //
+    if(curr->next != NULL){
+      printf("Distancia entre: %s ", curr->recipe.name);
+      printf("y %s", curr->next->recipe.name);
+      printf("%f \n", recipeComparison(curr->recipe.ingredientList , curr->next->recipe.ingredientList));
+    }
 		curr = curr->next;
 	}
 }
@@ -260,7 +266,7 @@ void DispG(FILE *ptrG, char* fileNameG){
 			j = 0;
 			while(currj != NULL) {
 				if(i != j) {
-					fprintf(ptrG, "%s -> %s [label = \"%f\"];\n", curri->recipe.name, currj->recipe.name, recipeComparison(curri->recipe.ingredientList, currj->recipe.ingredientList));
+					fprintf(ptrG, "%s -> %s [label = %f];\n", curri->recipe.name, currj->recipe.name, recipeComparison(curri->recipe.ingredientList, currj->recipe.ingredientList));
 				}
 				currj = currj->next;
 				j++;	
@@ -281,7 +287,9 @@ int main(void) {
   FILE *ptrG;
   char* filenameG = "graph.gv";
 
+
 	double distMat[MAX][MAX];
+
 	struct RecipeNode *curri = recipes.head, *currj = recipes.head;
 	int i = 0, j = 0;
 	while(curri != NULL){
@@ -311,4 +319,4 @@ int main(void) {
   return 0;
 }
 
-//line.find("Ingredients") != string::nops   printRecipes();
+//line.find("Ingredients") != string::nops 
